@@ -1,32 +1,36 @@
 %% Subject List
-subject = {'0401'};%,'0402','0403','0404','0405','0406','0407','1401'}; 
+%subject = {'0401'};%,'0402','0403','0404','0405','0406','0407','1401'}; 
+subject = {'RS','DB','MP','GW','GR','SY','DS','EC'};
 hemisphere = {'L','R'};
 
 %% Start Loop
 for i=1:length(subject)
     for hemi = 1:2
         %% Load variables required for source analysis
-        load(sprintf('D:\\ASD_Data\\%s\\visual\\data_clean_noICA.mat',subject{i}))
-        load(sprintf('D:\\ASD_Data\\%s\\visual\\sourceloc\\mri_realigned.mat',subject{i}))
-        load(sprintf('D:\\ASD_Data\\%s\\visual\\sourceloc\\sens.mat',subject{i}))
-        load(sprintf('D:\\ASD_Data\\%s\\visual\\sourceloc\\seg.mat',subject{i}))
-        %load(sprintf('D:\\ASD_Data\\%s\\visual\\sourceloc\\sourcepstS1.mat',subject{i}))
+        load(sprintf('D:\\pilot\\%s\\visual\\data_clean_noICA.mat',subject{i}))
+        load(sprintf('D:\\pilot\\%s\\visual\\sourceloc\\mri_realigned.mat',subject{i}))
+        load(sprintf('D:\\pilot\\%s\\visual\\sourceloc\\sens.mat',subject{i}))
+        load(sprintf('D:\\pilot\\%s\\visual\\sourceloc\\seg.mat',subject{i}))
+        %load(sprintf('D:\\pilot\\%s\\visual\\sourceloc\\sourcepstS1.mat',subject{i}))
         data_filtered = data_clean_noICA;
         
         %% Set the current directory
-        cd(sprintf('D:\\ASD_Data\\%s\\visual\\granger',subject{i}))
+        cd(sprintf('D:\\pilot\\%s\\visual\\granger',subject{i}))
         
         %% Set bad channel list
         
-        addpath('D:\scripts\preprocessing');
-        bad_chan_visual_ASD;
-        chans_included = eval(['chan_list_' subject{i}])
+%         addpath('D:\scripts\MEG_preprocessing');
+%         bad_chan_visual_ASD;
+%         chans_included = eval(['chan_list_' subject{i}])
+        
+        chans_included = {'MEG', '-MEG0322', '-MEG2542'};
         
         %% Load 3D 4k Cortical Mesh for L/R hemisphere & Concatenate
+        % test123
         
         sourcespace = ft_read_headshape({['Subject' subject{i} '.L.midthickness_orig.4k_fs_LR.surf.gii'],['Subject' subject{i} '.R.midthickness_orig.4k_fs_LR.surf.gii']});
         
-        figure; ft_plot_mesh(sourcespace);camlight;
+        figure; ft_plot_mesh(sourcespace);camlight; drawnow;
         
         %% Get the Atlas Points of Interest on the HCP atlas
         
@@ -168,7 +172,7 @@ for i=1:length(subject)
         headmodel  = ft_prepare_headmodel(cfg, seg);
         
         % Load headshape
-        headshape = ft_read_headshape(sprintf('D:\\ASD_Data\\raw_alien_data\\rs_asd_%s_aliens_quat_tsss.fif',lower(subject{i})))
+        headshape = ft_read_headshape(sprintf('D:\\pilot\\raw_alien_data\\rs_asd_%s_alien_tsss.fif',lower(subject{i})));
         headshape = ft_convert_units(headshape,'mm');
         
         %% Create leadfields for visual areas
@@ -188,22 +192,24 @@ for i=1:length(subject)
         ft_plot_mesh(sourcemodel_virt.pos(sourcemodel_virt.inside,:),'white','none');
         ft_plot_mesh(sourcespace,'facecolor','w','edgecolor',[0.5, 0.5, 0.5],'facealpha',0.1);
         ft_plot_sens(sens, 'style', 'black*')
-        title([subject{i}]);
+        title([subject{i}]); drawnow;
         
-        % Create figure to show position of VE
-%         figure; hold on;
-%         dataV1 = ft_plot_mesh(sourcemodel_virt.pos(1:49,:),'vertexcolor','r');
-%         dataV2 = ft_plot_mesh(sourcemodel_virt.pos(50:91,:),'vertexcolor','b');
-%         dataV4 = ft_plot_mesh(sourcemodel_virt.pos(139:177,:),'vertexcolor','g');
-%         dataMT = ft_plot_mesh(sourcemodel_virt.pos(178:184,:),'vertexcolor',[0,0,0]);
-%         dataV7 = ft_plot_mesh(sourcemodel_virt.pos(185:190,:),'vertexcolor',[1,1,0]);
-%         dataPIT = ft_plot_mesh(sourcemodel_virt.pos(190:198,:),'vertexcolor',[1,0,1]);
-%         %legend([data2 data4],'V1','V2')
-%         title([subject{i}]);
-%         hold off
-%         legend([dataV1 dataV2 dataV4 dataMT dataV7 dataPIT],'V1','V2','V4','MT','V7','PIT');
-%         ft_plot_mesh(sourcespace,'facecolor','w','edgecolor','none','facealpha',0.1); camlight;
-%         set(gcf,'color','w'); view(0, 0)
+        if hemisphere{hemi} == 'L'
+            %Create figure to show position of VE
+            figure; hold on;
+            dataV1 = ft_plot_mesh(sourcemodel_virt.pos(1:49,:),'vertexcolor','r');
+            dataV2 = ft_plot_mesh(sourcemodel_virt.pos(50:92,:),'vertexcolor','b');
+            dataV4 = ft_plot_mesh(sourcemodel_virt.pos(93:130,:),'vertexcolor','g');
+            dataMT = ft_plot_mesh(sourcemodel_virt.pos(131:137,:),'vertexcolor',[0,0,0]);
+            dataV7 = ft_plot_mesh(sourcemodel_virt.pos(138:143,:),'vertexcolor',[1,1,0]);
+            dataPIT = ft_plot_mesh(sourcemodel_virt.pos(144:152,:),'vertexcolor',[1,0,1]);
+            %legend([data2 data4],'V1','V2')
+            title([subject{i}]);
+            hold off
+            legend([dataV1 dataV2 dataV4 dataMT dataV7 dataPIT],'V1','V2','V4','MT','V7','PIT');
+            ft_plot_mesh(sourcespace,'facecolor','w','edgecolor','none','facealpha',0.1); camlight;
+            set(gcf,'color','w'); view(0, 0); drawnow;
+        end
         
         %% Perform source analysis for visual areas
         cfg=[];
@@ -311,7 +317,7 @@ for i=1:length(subject)
             xlabel('Time (sec)'); ylabel('Freq (Hz)');
             colormap(jet)
         end;
-        set(gcf, 'Position', get(0,'Screensize')); %saveas(gcf,'TF_areas.png');
+        set(gcf, 'Position', get(0,'Screensize')); drawnow;
         
         cfg=[];
         tlkvc=ft_timelockanalysis(cfg, virtsensparcel);
@@ -357,6 +363,7 @@ for i=1:length(subject)
         % end;
         
         cfg            = [];
+        cfg.foi = [1:1:140];
         cfg.output     = 'fourier';
         cfg.method     = 'mtmfft';
         cfg.taper      = 'hanning';
@@ -391,6 +398,7 @@ for i=1:length(subject)
         h = figure; ft_connectivityplot(cfg,granger,grangerflip);
         set(h,'NumberTitle','off')           % removes the 'Figure X' title where X is an integer
         set(h,'Name',['GC Spectrum for ', subject{i},' ',hemisphere{hemi},' Hemisphere'])             % set name of window to participant variable
+        drawnow;
         
         if hemisphere{hemi} == 'L'           % if doing LH save accordingly
             saveas(gcf,'granger_L.png')
@@ -404,26 +412,11 @@ for i=1:length(subject)
 end
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 %% Group
 subject = {'RS','DB','MP','GW','GR','SY','DS','EC'};
 granger_comb = [];   
 for i=1:length(subject)
-    cd(sprintf('D:\\ASD_Data\\%s\\visual\\granger',subject{i}'));
+    cd(sprintf('D:\\pilot\\%s\\visual\\granger',subject{i}'));
     load('granger_L.mat'); load('granger_R.mat');
     granger = granger_L.grangerspctrm + granger_R.grangerspctrm;
     %granger = granger_R.grangerspctrm;

@@ -27,7 +27,7 @@ feedback_ASD(:,141:501) = [];
 
 %% Control Data
 
-subject = {'DB','MP','GR','SY','DS','EC','RS','AE'};
+subject = {'RS','DB','MP','GW','GR','SY','DS','EC'};
 feedforward = [];
 feedback = [];
 
@@ -48,10 +48,6 @@ for k = 1:length(ff)
         feedback = vertcat(feedback,granger(fb(k),:));
     end
 end
-
-feedforward(:,141:501) = [];
-feedback(:,141:501) = [];
-
 
 %% Plot feedforward_ASD vs feedback_ASD
 
@@ -80,7 +76,7 @@ ylim([0 0.025]);
 xlabel('Frequency (Hz)')
 ylabel('Granger Causality')
 title('Control')
-legend('feedforward control','feedback Control')%,'GC flipped')
+legend('feedforward control','feedback Control')
 
 x = granger_R.freq(1:140);
 figure
@@ -94,7 +90,6 @@ plot(x,mean_feedback);
 xlabel('Frequency (Hz)')
 ylabel('Granger Causality')
 legend('feedforward ASD','feedback ASD','feedforward control','feedback Control')%,'GC flipped')
-
 
 %% Error Bars
 
