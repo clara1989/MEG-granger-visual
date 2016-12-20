@@ -22,17 +22,15 @@ for k = 1:length(ff)
     end
 end
 
-feedforward_ASD(:,141:501) = [];
-feedback_ASD(:,141:501) = [];
 
 %% Control Data
 
-subject = {'RS','DB','MP','GW','GR','SY','DS','EC'};
+subject = {'1401','1402','1403'};
 feedforward = [];
 feedback = [];
 
 for i=1:length(subject)
-    cd(sprintf('D:\\pilot\\%s\\visual\\granger',subject{i}'));
+    cd(sprintf('D:\\ASD_Data\\%s\\visual\\granger',subject{i}'));
     load('granger_L.mat'); 
     load('granger_R.mat');
     granger = (granger_L.grangerspctrm + granger_R.grangerspctrm)./2;
