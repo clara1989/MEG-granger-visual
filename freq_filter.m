@@ -14,9 +14,10 @@ late = ft_selectdata(cfg,data_filtered);
 
 cfg = [];
 cfg.channel = data_filtered.label;
-pstgrating = ft_appenddata(cfg,evoked,early,middle,late);
+pstgrating = ft_appenddata(cfg,early,middle,late);
 
 cfg            = [];
+cfg.foi = [1:1:140];
 cfg.output     = 'fourier';
 cfg.method     = 'mtmfft';
 cfg.taper      = 'dpss';
@@ -34,10 +35,8 @@ nrpttap = size(freq.fourierspctrm,1);
 
 fourier_source = zeros(2,nfreq,nrpttap);
 
-for i = 1:2
-    xxx = spatialfilter(i,:)*reshape(permute(freq.fourierspctrm,[2 3 1]), [nchan nfreq*nrpttap]);
-    fourier_source(i,:,:) = reshape(xxx, [nfreq nrpttap]);
-end
+    xxx = spatialfilter(1,:)*reshape(permute(freq.fourierspctrm,[2 3 1]), [nchan nfreq*nrpttap]);
+    fourier_source(1,:,:) = reshape(xxx, [nfreq nrpttap]);
 
 freq.fourierspctrm = fourier_source;
 freq.dimord = 'chan_freq_rpttap';
@@ -47,17 +46,5 @@ cfg           = [];
 cfg.method    = 'granger';
 cfg.granger.sfmethod = 'bivariate';
 granger      = ft_connectivityanalysis(cfg, freq);
-
-
-
-
-
-
-
-
-
-
-
-
 
 freqflip = ft_freqanalysis(cfg, tmpdata);

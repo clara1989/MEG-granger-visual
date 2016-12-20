@@ -1,21 +1,20 @@
 %% Subject List
-%subject = {'0401'};%,'0402','0403','0404','0405','0406','0407','1401'}; 
-subject = {'RS','DB','MP','GW','GR','SY','DS','EC'};
+subject = {'0401','0402','0403','0404','0405','0406','0407'}; 
+%subject = {'RS','DB','MP','GW','GR','SY','DS','EC'};
 hemisphere = {'L','R'};
 
 %% Start Loop
 for i=1:length(subject)
     for hemi = 1:2
         %% Load variables required for source analysis
-        load(sprintf('D:\\pilot\\%s\\visual\\data_clean_noICA.mat',subject{i}))
-        load(sprintf('D:\\pilot\\%s\\visual\\sourceloc\\mri_realigned.mat',subject{i}))
-        load(sprintf('D:\\pilot\\%s\\visual\\sourceloc\\sens.mat',subject{i}))
-        load(sprintf('D:\\pilot\\%s\\visual\\sourceloc\\seg.mat',subject{i}))
-        %load(sprintf('D:\\pilot\\%s\\visual\\sourceloc\\sourcepstS1.mat',subject{i}))
+        load(sprintf('D:\\ASD_Data\\%s\\visual\\data_clean_noICA.mat',subject{i}))
+        load(sprintf('D:\\ASD_Data\\%s\\visual\\sourceloc\\mri_realigned.mat',subject{i}))
+        load(sprintf('D:\\ASD_Data\\%s\\visual\\sourceloc\\sens.mat',subject{i}))
+        load(sprintf('D:\\ASD_Data\\%s\\visual\\sourceloc\\seg.mat',subject{i}))
         data_filtered = data_clean_noICA;
         
         %% Set the current directory
-        cd(sprintf('D:\\pilot\\%s\\visual\\granger',subject{i}))
+        cd(sprintf('D:\\ASD_Data\\%s\\visual\\granger',subject{i}))
         
         %% Set bad channel list
         
@@ -28,7 +27,7 @@ for i=1:length(subject)
         %% Load 3D 4k Cortical Mesh for L/R hemisphere & Concatenate
         % test123
         
-        sourcespace = ft_read_headshape({['Subject' subject{i} '.L.midthickness_orig.4k_fs_LR.surf.gii'],['Subject' subject{i} '.R.midthickness_orig.4k_fs_LR.surf.gii']});
+        sourcespace = ft_read_headshape({['Subject' subject{i} '.L.midthickness.4k_fs_LR.surf.gii'],['Subject' subject{i} '.R.midthickness.4k_fs_LR.surf.gii']});
         
         figure; ft_plot_mesh(sourcespace);camlight; drawnow;
         
@@ -172,7 +171,7 @@ for i=1:length(subject)
         headmodel  = ft_prepare_headmodel(cfg, seg);
         
         % Load headshape
-        headshape = ft_read_headshape(sprintf('D:\\pilot\\raw_alien_data\\rs_asd_%s_alien_tsss.fif',lower(subject{i})));
+        headshape = ft_read_headshape(sprintf('D:\\ASD_Data\\raw_alien_data\\rs_asd_%s_aliens_quat_tsss.fif',lower(subject{i})));
         headshape = ft_convert_units(headshape,'mm');
         
         %% Create leadfields for visual areas
@@ -221,8 +220,9 @@ for i=1:length(subject)
         cfg.grid.unit      ='mm';
         cfg.headmodel=headmodel;
         cfg.lcmv.lamda='20%';
+        cfg.lcmv.fixedori = 'yes';
         cfg.lcmv.keepfilter = 'yes';
-        cfg.lcmv.projectmom = 'yes';
+        cfg.lcmv.projectmom = 'no';
         %cfg.normalize = 'yes';
         source=ft_sourceanalysis(cfg, timelock2);
         
@@ -330,6 +330,7 @@ for i=1:length(subject)
             
             subplot(2,4,lll);ft_singleplotER(cfg,tlkvc);
         end;
+        
         %% Split into 0.365s non-overlapping epochs
         cfg = [];
         cfg.channel = virtsensparcel.label;
@@ -345,7 +346,7 @@ for i=1:length(subject)
         pstgrating = ft_appenddata(cfg,early,middle,late);
         
         %% Calculate granger-causality between all visual areas using a
-        %  approach non-parametric.
+        %  non-parametric approach
         %  See http://dx.doi.org/10.1016/j.neuron.2015.12.018
         
         % Random time-series for comparison
@@ -362,16 +363,16 @@ for i=1:length(subject)
         %     tmpdata.trial{jj}=fliplr(tmpdata.trial{jj});
         % end;
         
-        cfg            = [];
-        cfg.foi = [1:1:140];
-        cfg.output     = 'fourier';
-        cfg.method     = 'mtmfft';
-        cfg.taper      = 'hanning';
-        cfg.tapsmofrq  = 4;
-        cfg.keeptrials = 'yes';
-        cfg.pad = 1;
-        cfg.padtype = 'zero';
-        freq    = ft_freqanalysis(cfg, pstgrating);
+        cfg             = [];
+        cfg.foi         = [1:1:140];
+        cfg.output      = 'fourier';
+        cfg.method      = 'mtmfft';
+        cfg.taper       = 'hanning';
+        cfg.tapsmofrq   = 4;
+        cfg.keeptrials  = 'yes';
+        cfg.pad         = 1;
+        cfg.padtype     = 'zero';
+        freq            = ft_freqanalysis(cfg, pstgrating);
         freqflip = ft_freqanalysis(cfg, tmpdata);
         
         cfg           = [];
@@ -408,7 +409,27 @@ for i=1:length(subject)
             saveas(gcf,'granger_R.png')   
         end
         
+        
     end
+    %% Using Output Show Peak Granger Spectra
+    
+    load('granger_L.mat'); load('granger_R.mat');
+    granger = (granger_L.grangerspctrm + granger_R.grangerspctrm)./2;
+    granger_L.grangerspctrm = granger;
+    
+    M = mean(granger)
+    r = mean(grangerflip.grangerspctrm)
+    
+    x = granger_L.freq(1:140);
+    figure
+    plot(x,M(1:140))
+    hold on
+    plot(x,r(1:140),':')
+    xlabel('Frequency (Hz)')
+    ylabel('Granger Causality')
+    legend('Visual','Visual Flipped')
+    title([subject{i}])
+    saveas(gcf,'granger_collapsed.png')
 end
 
 
@@ -416,7 +437,7 @@ end
 subject = {'RS','DB','MP','GW','GR','SY','DS','EC'};
 granger_comb = [];   
 for i=1:length(subject)
-    cd(sprintf('D:\\pilot\\%s\\visual\\granger',subject{i}'));
+    cd(sprintf('D:\\ASD_Data\\%s\\visual\\granger',subject{i}'));
     load('granger_L.mat'); load('granger_R.mat');
     granger = granger_L.grangerspctrm + granger_R.grangerspctrm;
     %granger = granger_R.grangerspctrm;

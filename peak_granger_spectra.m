@@ -22,7 +22,7 @@ end
 
 %% ASD
 
-subject = {'0401', '0402','0404','0405','0406'};
+subject = {'1401','1402','1403'};
 granger_comb = [];   
 for i=1:length(subject)
     cd(sprintf('D:\\ASD_Data\\%s\\visual\\granger',subject{i}'));
