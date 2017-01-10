@@ -1,6 +1,17 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This script uses the GC spectra calculated using the
+% granger_visual_ASD.m script, sorts into feedforward vs feedback
+% connections (defined using macaque data), concatenates and plots 
+% ASD vs control
+%
+% Statistical analysis to come...
+%
+% Written by Robert Seymour January 2017
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% Load in data
 
-subject = {'0401','0402','0403','0404','0405','0406','0407','1401'};  
+subject = {'0401','0402','0403','0404','0405','0406','0407','0409','0413','0414'};  
 feedforward_ASD = [];
 feedback_ASD = [];
 
@@ -47,6 +58,9 @@ for k = 1:length(ff)
     end
 end
 
+%% CD to group folder
+cd('D:\ASD_Data\Group\GC')
+
 %% Plot feedforward_ASD vs feedback_ASD
 
 mean_feedforward = mean(feedforward);
@@ -54,6 +68,7 @@ mean_feedback = mean(feedback);
 mean_feedforward_ASD = mean(feedforward_ASD);
 mean_feedback_ASD = mean(feedback_ASD);
 
+% Separate Plots
 x = granger_R.freq(1:140);
 figure
 subplot(2,1,1)
@@ -64,7 +79,7 @@ xlabel('Frequency (Hz)')
 ylabel('Granger Causality')
 legend('feedforward ASD','feedback ASD')
 title('ASD')
-ylim([0 0.025]);
+ylim([0 0.035]);
 subplot(2,1,2)
 hold on 
 plot(x,mean_feedback);
@@ -75,7 +90,9 @@ xlabel('Frequency (Hz)')
 ylabel('Granger Causality')
 title('Control')
 legend('feedforward control','feedback Control')
+saveas(gcf,'ff_fb_separate_plot.png')   
 
+% Plots all together
 x = granger_R.freq(1:140);
 figure
 plot(x,mean_feedforward_ASD)
@@ -88,6 +105,11 @@ plot(x,mean_feedback);
 xlabel('Frequency (Hz)')
 ylabel('Granger Causality')
 legend('feedforward ASD','feedback ASD','feedforward control','feedback Control')%,'GC flipped')
+saveas(gcf,'ff_fb_plot_together.png')   
+
+% Write files to CSV for external plotting
+csvwrite('ASD_fb.csv',feedback_ASD); csvwrite('ASD_ff.csv',feedforward_ASD); 
+csvwrite('control_fb.csv',feedback); csvwrite('control_ff.csv',feedforward); 
 
 %% Error Bars
 
@@ -112,7 +134,7 @@ for df = 1:140
     DAI1(:,df) = ((feedforward(:,df) - feedback(:,df)) ./ (feedforward(:,df) + feedback(:,df)));
 end
 
-DAI2 = zeros(size(feedback));
+DAI2 = zeros(size(feedback_ASD));
 
 for df = 1:140
     DAI2(:,df) = ((feedforward_ASD(:,df) - feedback_ASD(:,df)) ./ (feedforward_ASD(:,df) + feedback_ASD(:,df)));
