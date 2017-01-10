@@ -1,5 +1,13 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This script calculates Granger Causality (GC) between 6 visual ROIs. Data
+% is from my alien task. The ROIs are defined using the HCP MMP atlas and a
+% 3D cortical mesh defined in fs_LR space.
+%
+% Written by Robert Seymour January 2017
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% Subject List
-subject = {'0401','0402','0403','0404','0405','0406','0407'}; 
+subject = {'0409','0414'}; 
 %subject = {'RS','DB','MP','GW','GR','SY','DS','EC'};
 hemisphere = {'L','R'};
 
@@ -25,7 +33,6 @@ for i=1:length(subject)
         chans_included = {'MEG', '-MEG0322', '-MEG2542'};
         
         %% Load 3D 4k Cortical Mesh for L/R hemisphere & Concatenate
-        % test123
         
         sourcespace = ft_read_headshape({['Subject' subject{i} '.L.midthickness.4k_fs_LR.surf.gii'],['Subject' subject{i} '.R.midthickness.4k_fs_LR.surf.gii']});
         
@@ -432,105 +439,3 @@ for i=1:length(subject)
     saveas(gcf,'granger_collapsed.png')
 end
 
-
-%% Group
-subject = {'RS','DB','MP','GW','GR','SY','DS','EC'};
-granger_comb = [];   
-for i=1:length(subject)
-    cd(sprintf('D:\\ASD_Data\\%s\\visual\\granger',subject{i}'));
-    load('granger_L.mat'); load('granger_R.mat');
-    granger = granger_L.grangerspctrm + granger_R.grangerspctrm;
-    %granger = granger_R.grangerspctrm;
-    if isempty(granger_comb) == 1
-        granger_comb = granger;
-    else
-        granger_comb = granger_comb + granger;
-    end
-end
-
-granger_comb = granger_comb./16;
-granger_L.grangerspctrm = granger_comb;
-
-cfg = [];
-cfg.parameter = 'grangerspctrm';
-cfg.xlim      = [0 80];
-cfg.zlim = [0 0.1]
-figure; ft_connectivityplot(cfg,granger_L);
-
-granger.grangerspctrm(1,:)
-
-feedforward = zeros(5,1001);
-x = 1;
-ff = {1,3,5,7,9};
-for sss = 1:5
-    feedforward(sss,:) = granger.grangerspctrm(ff{sss},:);
-end
-
-feedback = zeros(5,1001);
-x = 1;
-ff = {2,4,6,8,10};
-for sss = 1:5
-    feedback(sss,:) = granger.grangerspctrm(ff{sss},:);
-end
-
-CI = zeros(2,501);
-SEM = std(granger_L.grangerspctrm)/sqrt(length(granger_L.grangerspctrm));               % Standard Error
-ts = tinv([0.025  0.975],length(granger_L.grangerspctrm)-1);      % T-Score
-CI(1,:) = mean(granger_L.grangerspctrm) + rot90(ts(1).*SEM(:));        
-CI(2,:) = mean(granger_L.grangerspctrm) + rot90(ts(2).*SEM(:));    % Confidence Intervals
-CI = CI./10;
-
-figure
-shadedErrorBar(x,M(1:140),CI(:,1:140))
-legend('95% Confidence Interval','Visual')
-hold on
-plot(x,r(1:140),':')
-%errorbar(granger_L.grangerspctrm)
-xlabel('Frequency (Hz)')
-ylabel('Granger Causality')
-lengend('Visual Flipped')
-
-%% Plot the mean granger spectrum
-
-M = mean(granger_R.grangerspctrm)
-r = mean(grangerflip.grangerspctrm)
-
-x = granger_R.freq(1:140);
-figure
-plot(x,M(1:140))
-hold on
-%plot(x,r(1:140),':')
-xlabel('Frequency (Hz)')
-ylabel('Granger Causality')
-legend('Visual','Visual Flipped')
-
-%% Show with confidence intervals
-
-CI = zeros(2,140);
-for k = 1:length(CI)
-    
-    SEM = std(granger_R.grangerspctrm(:,k))/sqrt(length(granger_R.grangerspctrm(:,k)));               % Standard Error
-    ts = tinv([0.025  0.975],length(granger_R.grangerspctrm(:,k))-1);      % T-Score
-    CI(1,k) = mean(granger_R.grangerspctrm(:,k)) + rot90(ts(1).*SEM(:));
-    CI(2,k) = mean(granger_R.grangerspctrm(:,k)) + rot90(ts(2).*SEM(:));    % Confidence Intervals
-end
-
-CI = CI./3;
-
-x = (1:1:140);
-figure
-shadedErrorBar(x,M(1:140),CI(:,1:140))
-hold on
-%plot(x,r(1:140),':')
-%errorbar(granger_L.grangerspctrm)
-xlabel('Frequency (Hz)')
-ylabel('Granger Causality')
-legend('95% Confidence Interval','Visual','Visual Flipped')
-
-%% Show granger spectrum
-cfg = [];
-cfg.channel = {'V1','V2','V4','MT','V7','PIT'};
-cfg.parameter = 'grangerspctrm';
-cfg.xlim      = [0 140];
-cfg.zlim = [0 0.03]
-figure; ft_connectivityplot(cfg,granger_R);
