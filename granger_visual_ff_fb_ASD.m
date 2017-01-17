@@ -25,12 +25,13 @@ end
 
 %% Control Data
 
-subject = {'1401','1402','1403'};
+%subject = {'1401','1402','1403'};
+subject = {'RS','DB','MP','GW','GR','SY','DS','EC','VS','LA','AE','LH'};
 feedforward = [];
 feedback = [];
 
 for i=1:length(subject)
-    cd(sprintf('D:\\ASD_Data\\%s\\visual\\granger',subject{i}'));
+    cd(sprintf('D:\\pilot\\%s\\visual\\granger',subject{i}'));
     load('granger_L.mat'); 
     load('granger_R.mat');
     granger = (granger_L.grangerspctrm + granger_R.grangerspctrm)./2;
@@ -47,6 +48,45 @@ for k = 1:length(ff)
     end
 end
 
+%% Get Granger Spectra (ff,fb) collapsed across participants
+
+%subject = {'1401','1402','1403'};
+subject = {'RS','DB','MP','GW','GR','SY','DS','EC','VS','LA','AE','LH'};
+granger_all_ff = zeros(15,140); granger_all_fb = zeros(15,140);
+
+for i=1:length(subject)
+    cd(sprintf('D:\\pilot\\%s\\visual\\granger',subject{i}'));
+    load('granger_L.mat'); 
+    load('granger_R.mat');
+    granger = [];
+    granger = (granger_L.grangerspctrm + granger_R.grangerspctrm)./2;
+    
+    ff = [1,3,5,7,9,11,13,15,17,19,21,23,26,27,30];
+    fb = [2,4,6,8,10,12,14,16,18,20,22,24,25,28,29];
+    
+    feedforward_GC_collapsed = [];
+    for j = 1:length(ff)
+        feedforward_GC_collapsed = vertcat(feedforward_GC_collapsed,granger(ff(j),:));
+    end
+    granger_all_ff = (feedforward_GC_collapsed) + granger_all_ff;
+    
+    feedback_GC_collapsed = [];
+for k = 1:length(ff)
+        feedback_GC_collapsed = vertcat(feedback_GC_collapsed,granger(fb(k),:));
+    end
+    granger_all_fb = (feedback_GC_collapsed) + granger_all_fb;
+end
+
+granger_all_ff = granger_all_ff./length(subject); granger_all_fb = granger_all_fb./length(subject); 
+
+% Plot
+
+x = granger_R.freq(1:140); k = 1;
+
+for j = 1:15
+    subplot(4,4,j);plot(x,granger_all_fb(j,:),x,granger_all_ff(j,:),'LineWidth',3); legend('Feedback','Feedforward');
+    title([granger_L.labelcmb(k) ' <--> ' granger_L.labelcmb(k+1)]); k = k+2;
+end
 %% Plot feedforward_ASD vs feedback_ASD
 
 mean_feedforward = mean(feedforward);
@@ -57,33 +97,17 @@ mean_feedback_ASD = mean(feedback_ASD);
 x = granger_R.freq(1:140);
 figure
 subplot(2,1,1)
-plot(x,mean_feedforward)
-hold on
-plot(x,mean_feedback_ASD)
-xlabel('Frequency (Hz)')
-ylabel('Granger Causality')
-legend('feedforward ASD','feedback ASD')
-title('ASD')
-ylim([0 0.025]);
-subplot(2,1,2)
-hold on 
-plot(x,mean_feedback);
-hold on 
-plot(x,mean_feedforward_ASD)
-ylim([0 0.025]);
-xlabel('Frequency (Hz)')
-ylabel('Granger Causality')
-title('Control')
-legend('feedforward control','feedback Control')
+plot(x,mean_feedback_ASD,x,mean_feedforward_ASD,'LineWidth',3); xlabel('Frequency (Hz)')
+ylabel('Granger Causality'); legend('feedback ASD','feedforward ASD'); title('ASD');ylim([0 0.025]);
+subplot(2,1,2); hold on ; plot(x,mean_feedback,x,mean_feedforward,'LineWidth',3)
+ylim([0 0.025]); xlabel('Frequency (Hz)'); ylabel('Granger Causality'); title('Control')
+legend('feedback control','feedforward Control')
 
 x = granger_R.freq(1:140);
 figure
-plot(x,mean_feedforward_ASD)
-hold on
-plot(x,mean_feedback_ASD)
-hold on 
-plot(x,mean_feedforward);
-hold on 
+plot(x,mean_feedforward_ASD); hold on
+plot(x,mean_feedback_ASD); hold on 
+plot(x,mean_feedforward);; hold on 
 plot(x,mean_feedback);
 xlabel('Frequency (Hz)')
 ylabel('Granger Causality')
@@ -118,7 +142,7 @@ for df = 1:140
     DAI2(:,df) = ((feedforward_ASD(:,df) - feedback_ASD(:,df)) ./ (feedforward_ASD(:,df) + feedback_ASD(:,df)));
 end
 
-x = [1:1:140];
+x = granger_R.freq(1:140);
 figure
 plot(x,mean(DAI1))
 hold on
