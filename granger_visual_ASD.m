@@ -1,5 +1,13 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This script calculates Granger Causality (GC) between 6 visual ROIs. Data
+% is from my alien task. The ROIs are defined using the HCP MMP atlas and a
+% 3D cortical mesh defined in fs_LR space.
+%
+% Written by Robert Seymour January 2017
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 %% Subject List
-subject = {'0401','0402','0403','0404','0405','0406','0407'}; 
+subject = {'0409','0414'}; 
 %subject = {'RS','DB','MP','GW','GR','SY','DS','EC'};
 subject = {'AE'};
 hemisphere = {'L','R'};
@@ -26,7 +34,6 @@ for i=1:length(subject)
         chans_included = {'MEG', '-MEG0322', '-MEG2542'};
         
         %% Load 3D 4k Cortical Mesh for L/R hemisphere & Concatenate
-        % test123
         
         sourcespace = ft_read_headshape({['Subject' subject{i} '.L.midthickness_orig.4k_fs_LR.surf.gii'],['Subject' subject{i} '.R.midthickness_orig.4k_fs_LR.surf.gii']});
         
@@ -433,6 +440,7 @@ for i=1:length(subject)
     saveas(gcf,'granger_collapsed.png')
 end
 
+<<<<<<< HEAD
 % 
 % %% Group
 % subject = {'RS','DB','MP','GW','GR','SY','DS','EC'};
@@ -535,3 +543,5 @@ end
 % cfg.xlim      = [0 140];
 % cfg.zlim = [0 0.03]
 % figure; ft_connectivityplot(cfg,granger_R);
+=======
+>>>>>>> origin/master
