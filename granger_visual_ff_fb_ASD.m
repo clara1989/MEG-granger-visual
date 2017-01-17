@@ -58,8 +58,6 @@ for k = 1:length(ff)
         feedback = vertcat(feedback,granger(fb(k),:));
     end
 end
-
-<<<<<<< HEAD
 %% Get Granger Spectra (ff,fb) collapsed across participants
 
 %subject = {'1401','1402','1403'};
@@ -99,11 +97,10 @@ for j = 1:15
     subplot(4,4,j);plot(x,granger_all_fb(j,:),x,granger_all_ff(j,:),'LineWidth',3); legend('Feedback','Feedforward');
     title([granger_L.labelcmb(k) ' <--> ' granger_L.labelcmb(k+1)]); k = k+2;
 end
-=======
+
 %% CD to group folder
 cd('D:\ASD_Data\Group\GC')
 
->>>>>>> origin/master
 %% Plot feedforward_ASD vs feedback_ASD
 
 mean_feedforward = mean(feedforward);
@@ -115,13 +112,14 @@ mean_feedback_ASD = mean(feedback_ASD);
 x = granger_R.freq(1:140);
 figure
 subplot(2,1,1)
-<<<<<<< HEAD
 plot(x,mean_feedback_ASD,x,mean_feedforward_ASD,'LineWidth',3); xlabel('Frequency (Hz)')
 ylabel('Granger Causality'); legend('feedback ASD','feedforward ASD'); title('ASD');ylim([0 0.025]);
 subplot(2,1,2); hold on ; plot(x,mean_feedback,x,mean_feedforward,'LineWidth',3)
 ylim([0 0.025]); xlabel('Frequency (Hz)'); ylabel('Granger Causality'); title('Control')
 legend('feedback control','feedforward Control')
-=======
+
+% Plot 2
+
 plot(x,mean_feedforward)
 hold on
 plot(x,mean_feedback_ASD)
@@ -141,7 +139,6 @@ ylabel('Granger Causality')
 title('Control')
 legend('feedforward control','feedback Control')
 saveas(gcf,'ff_fb_separate_plot.png')   
->>>>>>> origin/master
 
 % Plots all together
 x = granger_R.freq(1:140);
