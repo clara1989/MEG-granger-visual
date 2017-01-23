@@ -7,9 +7,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Subject List
-subject = {'0409','0414'}; 
+%subject = {'0409','0414'}; 
 %subject = {'RS','DB','MP','GW','GR','SY','DS','EC'};
-subject = {'AE'};
+subject = {'SW','DK'};
 hemisphere = {'L','R'};
 
 %% Start Loop
@@ -35,7 +35,7 @@ for i=1:length(subject)
         
         %% Load 3D 4k Cortical Mesh for L/R hemisphere & Concatenate
         
-        sourcespace = ft_read_headshape({['Subject' subject{i} '.L.midthickness_orig.4k_fs_LR.surf.gii'],['Subject' subject{i} '.R.midthickness_orig.4k_fs_LR.surf.gii']});
+        sourcespace = ft_read_headshape({['Subject' subject{i} '.L.midthickness.4k_fs_LR.surf.gii'],['Subject' subject{i} '.R.midthickness.4k_fs_LR.surf.gii']});
         
         figure; ft_plot_mesh(sourcespace);camlight; drawnow;
         
@@ -179,7 +179,7 @@ for i=1:length(subject)
         headmodel  = ft_prepare_headmodel(cfg, seg);
         
         % Load headshape
-        headshape = ft_read_headshape(sprintf('D:\\pilot\\raw_alien_data\\rs_asd_%s_alien_tsss.fif',lower(subject{i})));
+        headshape = ft_read_headshape(sprintf('D:\\pilot\\raw_alien_data\\rs_asd_%s_aliens_quat_tsss.fif',lower(subject{i})));
         headshape = ft_convert_units(headshape,'mm');
         
         %% Create leadfields for visual areas
@@ -261,6 +261,11 @@ for i=1:length(subject)
         cfg.avgoverchan = 'yes';
         virtsensV1 = ft_selectdata(cfg,virtsens);
         virtsensV1.label = {'V1'};
+        
+        % Save virtsensV1 for later PAC calculation
+        cd(sprintf('D:\\pilot\\%s\\visual\\PAC',subject{i}))
+        save virtsensV1 virtsensV1
+        cd(sprintf('D:\\ASD_Data\\%s\\visual\\granger',subject{i}'));
         
         cfg.channel = virtsens.label(chan_number+1:chan_number+(length(indxV2pnt)))
         chan_number = chan_number+(length(indxV2pnt));
@@ -440,7 +445,7 @@ for i=1:length(subject)
     saveas(gcf,'granger_collapsed.png')
 end
 
-<<<<<<< HEAD
+
 % 
 % %% Group
 % subject = {'RS','DB','MP','GW','GR','SY','DS','EC'};
@@ -543,5 +548,3 @@ end
 % cfg.xlim      = [0 140];
 % cfg.zlim = [0 0.03]
 % figure; ft_connectivityplot(cfg,granger_R);
-=======
->>>>>>> origin/master
