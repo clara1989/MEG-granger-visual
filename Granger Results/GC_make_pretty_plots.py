@@ -11,12 +11,14 @@ Created on Mon Jan 09 09:25:11 2017
 #
 ###############################################################################
 
+cd C:\Users\seymourr\Google Drive\RS PhD Documents\Results\Granger
+
 import csv
 import numpy as np
 from matplotlib import pyplot as plt
 
-ff_ASD_file = 'D:/ASD_Data/Group/GC/pilot_V1_V4_ff.csv';
-fb_ASD_file = 'D:/ASD_Data/Group/GC/pilot_V1_V4_fb.csv';
+ff_ASD_file = 'D:/ASD_Data/Group/GC/ASD_V1_V4_ff.csv';
+fb_ASD_file = 'D:/ASD_Data/Group/GC/ASD_V1_V4_fb.csv';
 
 ## Extract the important information
 def extract_granger(filename):
@@ -67,6 +69,7 @@ plt.fill_between(x,ff_ASD_mean+CI_ff_ASD[0],ff_ASD_mean-CI_ff_ASD[0],color='#ffa
 plt.xlabel('Frequency (Hz)',fontsize=20)
 plt.ylabel('Granger Causality Value',fontsize=20)
 plt.legend(['Feedback','Feedforward'],fontsize=20)
+plt.savefig("ASD_GC.png", dpi=600)
 plt.show()
 
 ###############################################################################

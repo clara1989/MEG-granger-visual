@@ -1,53 +1,45 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% This script calculates Granger Causality (GC) between 5 visual ROIs 
-% (V1,V4,MT,PIT,V7). 
-
-% Data is from my alien task. The ROIs are defined using the HCP MMP atlas 
-% and a 3D cortical mesh defined in fs_LR space.
-%
-% Analysis Steps:
-%
-% - Perform source analysis across subjsetc specigfic 3D cortical mesh 
-% defined in fs_LR space
-% - Create parcel specific spatial filter for the 5 ROIs in the left and
-% right hemisphere
-% - Fourier representation
-% - Left multiply the fourier output by the spatial filter for each region
-% Calculate non-parametric Granger Causality using ft_connectivityanalysis
-% Save the left hemisphere and right hemishpere granger spectra
+% This script calculates Granger Causality (GC) between 6 visual ROIs. Data
+% is from my alien task. The ROIs are defined using the HCP MMP atlas and a
+% 3D cortical mesh defined in fs_LR space.
 %
 % Written by Robert Seymour February 2017
+%
+% This version uses freq*spatial filter method
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Subject List
-% subject = sort({'RS','DB','MP','GR','DS','EC','VS','LA','AE','SY','GW',...
-%     'SW','DK','LH','KM','FL','AN','IG'});
-
-% subject = {'0401','0402','0403','0404','0405','0406','0407','0409','0411',...
-%      '0413','0414','0415','0416'};
- 
-subject = {'1401','1402','1403','1404','1405','1406','1407','1408'};
+subject = sort({'RS','DB','MP','GR','DS','EC','VS','LA','AE','SY','GW',...
+    'SW','DK','LH','KM','FL','AN','IG'});
 
 %% Start Loop
 for i=1:length(subject)
     %% Preload the HCP atlas
+    
     % Here we are using the 4k HCP atlas mesh to define visual ROIs from the subject-specific 4k cortical mesh
     load('D:\scripts\MEG-granger-visual\atlas_MSMAll_4k.mat');
     
     %% Load variables required for source analysis
-    load(sprintf('D:\\ASD_Data\\%s\\visual\\data_clean_noICA.mat',subject{i})); % non-ICA'd data
-    load(sprintf('D:\\ASD_Data\\%s\\visual\\sourceloc\\sens.mat',subject{i}));
-    load(sprintf('D:\\ASD_Data\\%s\\visual\\sourceloc\\seg.mat',subject{i}));
-    data_filtered = data_clean_noICA; % for book-keeping
+    load(sprintf('D:\\pilot\\%s\\visual\\data_clean_noICA.mat',subject{i}))
+    load(sprintf('D:\\pilot\\%s\\visual\\sourceloc\\mri_realigned.mat',subject{i}))
+    load(sprintf('D:\\pilot\\%s\\visual\\sourceloc\\sens.mat',subject{i}))
+    load(sprintf('D:\\pilot\\%s\\visual\\sourceloc\\seg.mat',subject{i}))
+    data_filtered = data_clean_noICA;
     
     %% Set the current directory
-    cd(sprintf('D:\\ASD_Data\\%s\\visual\\granger',subject{i}))
+    cd(sprintf('D:\\pilot\\%s\\visual\\granger',subject{i}))
     
     %% Set bad channel list - can change to specific channels if necessary
-    chans_included = {'MEG', '-MEG0322', '-MEG2542','-MEG0111','-MEG0532'};
+    
+    %         addpath('D:\scripts\MEG_preprocessing');
+    %         bad_chan_visual_ASD;
+    %         chans_included = eval(['chan_list_' subject{i}])
+    
+    chans_included = {'MEG', '-MEG0322', '-MEG2542'};
     
     %% Load 3D 4k Cortical Mesh for L/R hemisphere & Concatenate
+    
     sourcespace = ft_read_headshape({['Subject' subject{i} '.L.midthickness.4k_fs_LR.surf.gii'],['Subject' subject{i} '.R.midthickness.4k_fs_LR.surf.gii']});
     %figure; ft_plot_mesh(sourcespace);camlight; drawnow; %plot if needed
     
@@ -83,7 +75,7 @@ for i=1:length(subject)
     cfg.component = comp.label(numcomponent:end);
     data_fix = ft_rejectcomponent(cfg, comp);
     
-    %% Time-Lock Analysis
+    % Time-Lock Analysis
     cfg = [];
     cfg.channel = chans_included;
     cfg.covariance = 'yes'; % compute the covariance for single trials, then averFEFe
@@ -92,13 +84,13 @@ for i=1:length(subject)
     timelock1 = ft_timelockanalysis(cfg, data_fix);
     
     %% Setup pre-requisites for source localisation
-    % Create headmodel
+    %Create headmodel
     cfg        = [];
     cfg.method = 'singleshell';
     headmodel  = ft_prepare_headmodel(cfg, seg);
     
     % Load headshape
-    headshape = ft_read_headshape(sprintf('D:\\ASD_Data\\raw_alien_data\\rs_asd_%s_aliens_quat_tsss.fif',lower(subject{i})));
+    headshape = ft_read_headshape(sprintf('D:\\pilot\\raw_alien_data\\rs_asd_%s_aliens_quat_tsss.fif',lower(subject{i})));
     headshape = ft_convert_units(headshape,'mm');
     
     %% Create leadfields
@@ -120,7 +112,7 @@ for i=1:length(subject)
 %     ft_plot_sens(sens, 'style', 'black*')
 %     set(gcf,'color','w'); drawnow;
     
-    %% Perform source analysis across the mesh
+    %% Perform source analysis
     cfg=[];
     cfg.keeptrials = 'no';
     cfg.channel= chans_included;
@@ -139,7 +131,6 @@ for i=1:length(subject)
     
     %% JM Code to get a single spatial filter across all the points of a parcel
     
-    addpath('D:\scripts\MEG-granger-visual');
     [s,p] = mous_lcmv_parcellate(source,timelock1,'parcellation',atlas,'method','parcellation');
     
     %% Split sensor-level into 0.365s non-overlapping epochs (avoiding ERP)
@@ -153,17 +144,18 @@ for i=1:length(subject)
     late = ft_selectdata(cfg,data_fix);
     
     cfg = [];
-    cfg.channel = data_fix.label;
+    cfg.channel = virtsensparcel.label;
     pstgrating = ft_appenddata(cfg,early,middle,late);
     
     %% Calculate fourier output from 1-140Hz using a Hanning taper
+    
     cfg             = [];
     cfg.foi         = [1:1:140];
-    cfg.toi         = 'all';
+    cfg.toi         = 'all'
     cfg.output      = 'fourier';
     cfg.method      = 'mtmfft';
     cfg.taper       = 'hanning';
-    cfg.tapsmofrq   = 4; %4Hz smoothing - OK?
+    cfg.tapsmofrq   = 4;
     cfg.pad         = 1;
     cfg.keeptrials  = 'yes';
     cfg.padtype     = 'zero';
@@ -175,14 +167,6 @@ for i=1:length(subject)
         
         %% Extract VE for LH
         if hemisphere{hemi} == 'L'
-            
-            % Extract V1 timecourse for later
-            [VE_V1] = get_VE_from_parcellated_filter(data_fix,'L_V1_ROI',p);
-            % Save virtsensV1 for later PAC calculation
-            cd(sprintf('D:\\ASD_Data\\%s\\visual\\PAC',subject{i}))
-            save VE_V1 VE_V1
-            cd(sprintf('D:\\ASD_Data\\%s\\visual\\granger',subject{i}'));
-            clear VE_V1
             
             % Make sure to put extract_fourier_parcellation in your search
             % path
@@ -207,25 +191,25 @@ for i=1:length(subject)
         
         %% Create FT structure to hold the fourier outputs
         
-        VE_visual = [];
-        VE_visual.label = {'V1','V4','V7','MT','PIT'};
-        VE_visual.dimord = 'rpttap_chan_freq';
-        VE_visual.freq = freq.freq;
-        VE_visual.fourierspctrm(:,1,:) = VE_V1;
-        VE_visual.fourierspctrm(:,2,:) = VE_V4;
-        VE_visual.fourierspctrm(:,3,:) = VE_V7;
-        VE_visual.fourierspctrm(:,4,:) = VE_MT;
-        VE_visual.fourierspctrm(:,5,:) = VE_PIT;
-        VE_visual.cumsumcnt = freq.cumsumcnt;
-        VE_visual.cumtapcnt = freq.cumtapcnt;
-        VE_visual.trialinfo = freq.trialinfo;
-        VE_visual.cfg = freq.cfg;
+        virtsensparcel = [];
+        virtsensparcel.label = {'V1','V4','V7','MT','PIT'};
+        virtsensparcel.dimord = 'rpttap_chan_freq';
+        virtsensparcel.freq = freq.freq;
+        virtsensparcel.fourierspctrm(:,1,:) = VE_V1;
+        virtsensparcel.fourierspctrm(:,2,:) = VE_V4;
+        virtsensparcel.fourierspctrm(:,3,:) = VE_V7;
+        virtsensparcel.fourierspctrm(:,4,:) = VE_MT;
+        virtsensparcel.fourierspctrm(:,5,:) = VE_PIT;
+        virtsensparcel.cumsumcnt = freq.cumsumcnt;
+        virtsensparcel.cumtapcnt = freq.cumtapcnt;
+        virtsensparcel.trialinfo = freq.trialinfo;
+        virtsensparcel.cfg = freq.cfg;
         
         %% Compute GC + Plot
         cfg           = [];
         cfg.method    = 'granger';
         cfg.granger.sfmethod = 'bivariate';
-        granger      = ft_connectivityanalysis(cfg, VE_visual);
+        granger      = ft_connectivityanalysis(cfg, virtsensparcel);
         
         cfg = [];
         cfg.parameter = 'grangerspctrm';
@@ -237,16 +221,16 @@ for i=1:length(subject)
             saveas(gcf,'granger_L.png')
             granger_L = granger;
             save granger_L granger_L
-            VE_visual_L = VE_visual;
-            save VE_visual_L VE_visual_L
+            virtsensparcel_L = virtsensparcel;
+            save virtsensparcel_L virtsensparcel_L
         end
         
         if hemisphere{hemi} == 'R'           % if doing RH save accordingly
             saveas(gcf,'granger_R.png')
             granger_R = granger;
             save granger_R granger_R
-            VE_visual_R = VE_visual;
-            save VE_visual_R VE_visual_R
+            virtsensparcel_R = virtsensparcel;
+            save virtsensparcel_R virtsensparcel_R
         end
         
     end
@@ -269,16 +253,21 @@ for i=1:length(subject)
         feedback = vertcat(feedback,granger_L.grangerspctrm(fb(k),:));
     end
     
-    %% Create a figure
-    figure; x = granger_R.freq(1:140);
-    plot(x,mean(feedback));hold on; plot(x,mean(feedforward))
-    ylim([0 0.06]);xlabel('Frequency (Hz)');ylabel('Granger Causality')
-    title([subject{i}]);legend('feedforward','feedback')
+    figure
+    x = granger_R.freq(1:140);
+    plot(x,mean(feedback));
+    hold on
+    plot(x,mean(feedforward))
+    ylim([0 0.06]);
+    xlabel('Frequency (Hz)')
+    ylabel('Granger Causality')
+    title([subject{i}])
+    legend('feedforward','feedback')
     saveas(gcf,'granger_collapsed.png')
 end
 
 
 
 
-
+end
 

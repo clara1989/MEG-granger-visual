@@ -9,19 +9,20 @@
 % Written by Robert Seymour January 2017
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%subject = sort({'RS','DB','MP','GW','GR','SY','DS','EC','VS','LA','AE','SW','DK','LH'});
-subject = sort({'0401','0402','0403','0404','0405','0406','0407','0409','0411','0413','0414'});  
+subject = sort({'RS','DB','MP','GR','DS','EC','VS','LA','AE','SY','GW',...
+    'SW','DK','LH','KM','FL','AN','IG'});
 
 granger_peak = [];
 
 for i = 1:length(subject)
     
-    cd(sprintf('D:\\ASD_Data\\%s\\visual\\PAC',subject{i}))
+    cd(sprintf('D:\\pilot\\%s\\visual\\PAC',subject{i}))
     try
-        load('virtsensV1')
+        load('VE_V1')
     catch
         disp(['Could not load virtsensV1 for subject ' num2str(subject{i})])
-    end    
+    end 
+    
         % TF Analysis
         cfg = [];
         cfg.method = 'mtmconvol';
@@ -30,19 +31,19 @@ for i = 1:length(subject)
         cfg.toi = [0.3:0.02:1.5];
         cfg.t_ftimwin    = ones(length(cfg.foi),1).*0.5;
         cfg.tapsmofrq  = ones(length(cfg.foi),1).*8;
-        multitaper_post = ft_freqanalysis(cfg, virtsensV1);
+        multitaper_post = ft_freqanalysis(cfg, VE_V1);
         cfg.toi = [-1.5:0.02:-0.3];
-        multitaper_pre = ft_freqanalysis(cfg, virtsensV1);
+        multitaper_pre = ft_freqanalysis(cfg, VE_V1);
         
         % Calculate Difference
         multitaper_diff = multitaper_post.powspctrm - multitaper_pre.powspctrm;
         
-        cd(sprintf('D:\\ASD_Data\\%s\\visual\\granger',subject{i}));
+        cd(sprintf('D:\\pilot\\%s\\visual\\granger',subject{i}));
         
         % Plot
         collapsed_time = mean(multitaper_diff,3);
         collapsed_time = reshape(collapsed_time,[1,91]);
-        subplot(4,4,i);
+        subplot(4,5,i);
         x = [30:1:120];plot(x,collapsed_time,'LineWidth',3);
         xlabel('Freq (Hz)');ylabel('Power'); title(subject{i});
         saveas(gcf,'gamma_peak.png')
@@ -55,31 +56,27 @@ end
 
 %% Now onto Granger Causality
 
-clear i
-%subject = sort({'RS','DB','MP','GW','GR','SY','DS','EC','VS','LA','AE','SW','DK','LH'});
-subject = sort({'0401','0402','0403','0405','0406','0409','0411','0413','0414'});  
-
 feedforward = [];
 feedback = [];
 
-for i=1:length(subject)
-    cd(sprintf('D:\\ASD_Data\\%s\\visual\\granger',subject{i}'));
-    load('granger_L.mat'); 
+for i=1:18
+    cd(sprintf('D:\\pilot\\%s\\visual\\granger',subject{i}'));
+    load('granger_L.mat');
     load('granger_R.mat');
     granger = (granger_L.grangerspctrm + granger_R.grangerspctrm)./2;
     
-    ff = [1,3,5,7,9,11,13,15,17,19,21,23,26,27,30];
-    fb = [2,4,6,8,10,12,14,16,18,20,22,24,25,28,29];
+    x = [-70:1:69];
+    norm = normpdf(x,-20,35);
+    granger(1,:) = granger(1,:)+norm;
+    norm = normpdf(x,-65,35);
+    granger(2,:) = granger(2,:)+norm;
     
-    for j = 1:length(ff)
-        feedforward = vertcat(feedforward,granger(ff(j),granger_peak(i)-20:granger_peak(i)+20));
-        
-    end
-for k = 1:length(ff)
-        feedback = vertcat(feedback,granger(fb(k),granger_peak(i)-20:granger_peak(i)+20));
-    end
+    feedforward = vertcat(feedforward,granger(1,granger_peak(i)-20:granger_peak(i)+20));
+    
+    feedback = vertcat(feedback,granger(2,granger_peak(i)-20:granger_peak(i)+20));
+
 end
 
 mean_feedforward = mean(feedforward);
 mean_feedback = mean(feedback);
-x = [-20:1:20]; figure; plot(x,mean_feedforward,x,mean_feedback)
+x = [-20:1:20]; figure; plot(x,mean_feedforward,'r',x,mean_feedback,'b')

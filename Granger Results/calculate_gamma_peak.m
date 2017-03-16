@@ -8,8 +8,7 @@
 % Written by Robert Seymour January 2017
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-subject = {'MP','GW','GR','SY','DS','EC','VS','LA','AE'};
-subject = {'SW'};
+subject = {'0411'};
 
 for i = 1:length(subject)
     
