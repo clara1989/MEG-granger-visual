@@ -13,21 +13,15 @@
 % right hemisphere
 % - Fourier representation
 % - Left multiply the fourier output by the spatial filter for each region
-% Calculate non-parametric Granger Causality using ft_connectivityanalysis
-% Save the left hemisphere and right hemishpere granger spectra
+% - Calculate non-parametric Granger Causality using ft_connectivityanalysis
+% - Save the left hemisphere and right hemishpere granger spectra
 %
 % Written by Robert Seymour February 2017
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Subject List
-% subject = sort({'RS','DB','MP','GR','DS','EC','VS','LA','AE','SY','GW',...
-%     'SW','DK','LH','KM','FL','AN','IG'});
-
-% subject = {'0401','0402','0403','0404','0405','0406','0407','0409','0411',...
-%      '0413','0414','0415','0416'};
- 
-subject = {'1401','1402','1403','1404','1405','1406','1407','1408'};
+subject = {''} 
 
 %% Start Loop
 for i=1:length(subject)
@@ -138,6 +132,11 @@ for i=1:length(subject)
     source=ft_sourceanalysis(cfg, timelock1);
     
     %% JM Code to get a single spatial filter across all the points of a parcel
+    
+    % I cannot share this at present but the function simply uses SVD to 
+    % extract a single spatial filter from each region of the atlas. You
+    % can do this using your own code or extract a single spatial filter
+    % from each region using the maximum voxel or middle of the parcel etc.
     
     addpath('D:\scripts\MEG-granger-visual');
     [s,p] = mous_lcmv_parcellate(source,timelock1,'parcellation',atlas,'method','parcellation');
